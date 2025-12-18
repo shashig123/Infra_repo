@@ -1,0 +1,174 @@
+
+trigger: 
+- feature
+- main
+
+ 
+pool: shashipool  
+variables: 
+ workDir: '$(System.DefaultWorkingDirectory)/environment/prod'
+stages:
+  - stage: build
+    jobs:
+      - job: TerraformPlanandInit
+        displayName: "Run Terraform Init & Plan"
+        steps:
+        - task: TerraformInstaller@1
+          inputs:
+            terraformVersion: 'latest'
+
+      # - job: terraformInit
+      #   displayName: 'TeraformInit'
+      #   steps:
+      #   - task: TerraformTask@5
+      #     inputs:
+      #       provider: 'azurerm'
+      #       command: 'init'
+      #       workingDirectory: '$(workDir)'
+      #       backendServiceArm: 'todospn'
+      #       backendAzureRmOverrideSubscriptionID: '/eid1/c/pub/t/e9xrf5-KdkKBXXhIrjOA0g/a/rISbSSETf0KqFyZ8ppdXmA/sc/42ba5669-1b4e-45fd-b7f4-db40c64aa18d/51e6fa7b-5e16-4661-8452-e9bf8e31eedb'
+      #       backendAzureRmStorageAccountName: 'todostg'
+      #       backendAzureRmContainerName: 'todocaontainer'
+      #       backendAzureRmKey: 'dev.terraform.tfstate'
+      #       initArguments: '-upgrade -input=false'
+      
+        # - task: TerraformTask@5
+        #   displayName: 'TerraformValidate'
+        #   inputs:
+        #     provider: 'azurerm'
+        # #     command: 'validate'
+        #     workingDirectory: '$(workDir)'
+        - task: PowerShell@2
+          continueOnError: true
+          displayName: Tflint integaration
+          inputs:
+            targetType: 'inline'
+            script: |
+              # Write your PowerShell commands here.
+              
+              D:\shashi_GitRepos\agent-1\_work\_tool\tflint.exe --init
+
+
+        - task: PowerShell@2
+          continueOnError: true
+          displayName: tflint
+          inputs:
+            targetType: 'inline'
+            script: |
+              # Write your PowerShell commands here.
+              
+              D:\shashi_GitRepos\agent-1\_work\_tool\tflint.exe
+        - task: PowerShell@2
+          inputs:
+            targetType: 'inline'
+            script: 'tflint --format json > tflint-report.json'
+      
+            # workingDirectory: '$(workDir)'
+
+        # - task: PowerShell@2
+        #   displayName: 'tfsec scanning'
+        #   inputs:
+        #     targetType: 'inline'
+        #     script: |
+        #       tfsec "$(workDir)" --format junit --out "$(workDir)\tfsec-results.xml"
+        #             tfsec "$(workDir)" --format json --out "$(workDir)\tfsec-results.json"
+        
+        - task: PowerShell@2
+          displayName: 'tfsec scanning'
+          continueOnError: true
+          inputs:
+            targetType: 'inline'
+            script: 'tfsec .'
+        - task: PowerShell@2
+          displayName: "Publish tfsec test results"
+          continueOnError: true
+          inputs:
+            testRunner: JUnit
+            targetType: 'inline'
+            script: 'tfsec . --format json > tfsec-report.json'
+
+        - task: PowerShell@2
+          displayName: checkov Scanning
+          inputs:
+            targetType: 'inline'
+            script: 'checkov -d .'
+
+        - task: PowerShell@2
+          displayName: 'checkovOuput'
+          inputs:
+            targetType: 'inline'
+            script: 'checkov -d . -o junit > result1.xml'    
+        # - task: PowerShell@2
+        #   continueOnError: true
+        #   displayName: "Infracost full path"
+        #   env:
+        #     INFRACOST_API_KEY: $(INFRACOST_API_KEY)
+        #   inputs:
+        #     targetType: 'inline'
+        #     workingDirectory: '$(workDir)'
+        #     script: '& ''D:\shashi_GitRepos\agent-1\_work\_tool\infracost.exe'' breakdown --path . --format json --out-file infracost.json'
+            
+
+        # infracost auth login  
+#         - task: TerraformTask@5
+#           displayName: 'TerraformPlan'
+#           inputs:
+#             provider: 'azurerm'
+#             command: 'plan'
+#             workingDirectory: '$(workDir)'
+#             environmentServiceNameAzureRM: 'todospn'
+          
+# # # ==================================
+# # # ManualApproval
+# # # ==================================
+
+#   - stage: ManualApproval
+#     displayName: "manual approval before apply"
+#     dependsOn: build
+#     condition: succeeded()
+    
+#     jobs:
+#       - job: "waitforValidation"
+#         displayName: 'ManualValidationStep'
+#         pool: server
+#         steps: 
+#         - task: ManualValidation@1
+#           inputs:
+#             notifyUsers: 'shashijuly82@gmail.com'
+#             approvers: 'shashijuly82@gmail.com'
+#             instructions: 'Please validate the Terraform plan before applying.'
+        
+         
+# # ============================
+# # Terraform init and apply in stage 3
+# #==============================
+
+#   - stage: TerraformInitAndApply
+#     displayName: 'TerraformInit and Apply'
+#     dependsOn: ManualApproval
+#     condition: succeeded()
+#     jobs:
+#       - job: terraformInit
+#         displayName: TerraformInit
+#         pool: shashipool
+#         steps:
+#         - task: TerraformTask@5
+#           displayName: terraformInit
+#           inputs:
+#             provider: 'azurerm'
+#             command: 'init'
+#             workingDirectory: '$(workDir)'
+#             backendServiceArm: 'todospn'
+#             backendAzureRmStorageAccountName: 'shashistg'
+#             backendAzureRmContainerName: 'todocaontainer'
+#             backendAzureRmKey: 'dev.terraform.tfstate'
+
+#         - task: TerraformTask@5
+#           displayName: terraformApply
+#           inputs:
+#             provider: 'azurerm'
+#             command: 'apply'
+#             workingDirectory: '$(workDir)'
+#             commandOptions: '--auto-approve'
+#             environmentServiceNameAzureRM: 'todospn'
+
