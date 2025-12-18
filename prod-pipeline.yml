@@ -17,27 +17,27 @@ stages:
           inputs:
             terraformVersion: 'latest'
 
-      # - job: terraformInit
-      #   displayName: 'TeraformInit'
-      #   steps:
-      #   - task: TerraformTask@5
-      #     inputs:
-      #       provider: 'azurerm'
-      #       command: 'init'
-      #       workingDirectory: '$(workDir)'
-      #       backendServiceArm: 'todospn'
-      #       backendAzureRmOverrideSubscriptionID: '/eid1/c/pub/t/e9xrf5-KdkKBXXhIrjOA0g/a/rISbSSETf0KqFyZ8ppdXmA/sc/42ba5669-1b4e-45fd-b7f4-db40c64aa18d/51e6fa7b-5e16-4661-8452-e9bf8e31eedb'
-      #       backendAzureRmStorageAccountName: 'todostg'
-      #       backendAzureRmContainerName: 'todocaontainer'
-      #       backendAzureRmKey: 'dev.terraform.tfstate'
-      #       initArguments: '-upgrade -input=false'
+      - job: terraformInit
+        displayName: 'TeraformInit'
+        steps:
+        - task: TerraformTask@5
+          inputs:
+            provider: 'azurerm'
+            command: 'init'
+            workingDirectory: '$(workDir)'
+            backendServiceArm: 'todospn'
+            backendAzureRmOverrideSubscriptionID: '/eid1/c/pub/t/e9xrf5-KdkKBXXhIrjOA0g/a/rISbSSETf0KqFyZ8ppdXmA/sc/42ba5669-1b4e-45fd-b7f4-db40c64aa18d/51e6fa7b-5e16-4661-8452-e9bf8e31eedb'
+            backendAzureRmStorageAccountName: 'todostg'
+            backendAzureRmContainerName: 'todocaontainer'
+            backendAzureRmKey: 'dev.terraform.tfstate'
+            initArguments: '-upgrade -input=false'
       
-        # - task: TerraformTask@5
-        #   displayName: 'TerraformValidate'
-        #   inputs:
-        #     provider: 'azurerm'
-        # #     command: 'validate'
-        #     workingDirectory: '$(workDir)'
+        - task: TerraformTask@5
+          displayName: 'TerraformValidate'
+          inputs:
+            provider: 'azurerm'
+        #     command: 'validate'
+            workingDirectory: '$(workDir)'
         - task: PowerShell@2
           continueOnError: true
           displayName: Tflint integaration
@@ -79,6 +79,7 @@ stages:
           inputs:
             targetType: 'inline'
             script: 'tfsec .'
+
         - task: PowerShell@2
           displayName: "Publish tfsec test results"
           continueOnError: true
@@ -97,7 +98,8 @@ stages:
           displayName: 'checkovOuput'
           inputs:
             targetType: 'inline'
-            script: 'checkov -d . -o junit > result1.xml'    
+            script: 'checkov -d . -o junit > result1.xml' 
+
         # - task: PowerShell@2
         #   continueOnError: true
         #   displayName: "Infracost full path"
@@ -110,58 +112,58 @@ stages:
             
 
         # infracost auth login  
-#         - task: TerraformTask@5
-#           displayName: 'TerraformPlan'
-#           inputs:
-#             provider: 'azurerm'
-#             command: 'plan'
-#             workingDirectory: '$(workDir)'
-#             environmentServiceNameAzureRM: 'todospn'
+        - task: TerraformTask@5
+          displayName: 'TerraformPlan'
+          inputs:
+            provider: 'azurerm'
+            command: 'plan'
+            workingDirectory: '$(workDir)'
+            environmentServiceNameAzureRM: 'todospn'
           
-# # # ==================================
-# # # ManualApproval
-# # # ==================================
+# # ==================================
+# # ManualApproval
+# # ==================================
 
-#   - stage: ManualApproval
-#     displayName: "manual approval before apply"
-#     dependsOn: build
-#     condition: succeeded()
+  - stage: ManualApproval
+    displayName: "manual approval before apply"
+    dependsOn: build
+    condition: succeeded()
     
-#     jobs:
-#       - job: "waitforValidation"
-#         displayName: 'ManualValidationStep'
-#         pool: server
-#         steps: 
-#         - task: ManualValidation@1
-#           inputs:
-#             notifyUsers: 'shashijuly82@gmail.com'
-#             approvers: 'shashijuly82@gmail.com'
-#             instructions: 'Please validate the Terraform plan before applying.'
+    jobs:
+      - job: "waitforValidation"
+        displayName: 'ManualValidationStep'
+        pool: server
+        steps: 
+        - task: ManualValidation@1
+          inputs:
+            notifyUsers: 'shashijuly82@gmail.com'
+            approvers: 'shashijuly82@gmail.com'
+            instructions: 'Please validate the Terraform plan before applying.'
         
          
-# # ============================
-# # Terraform init and apply in stage 3
-# #==============================
+# ============================
+# Terraform init and apply in stage 3
+#==============================
 
-#   - stage: TerraformInitAndApply
-#     displayName: 'TerraformInit and Apply'
-#     dependsOn: ManualApproval
-#     condition: succeeded()
-#     jobs:
-#       - job: terraformInit
-#         displayName: TerraformInit
-#         pool: shashipool
-#         steps:
-#         - task: TerraformTask@5
-#           displayName: terraformInit
-#           inputs:
-#             provider: 'azurerm'
-#             command: 'init'
-#             workingDirectory: '$(workDir)'
-#             backendServiceArm: 'todospn'
-#             backendAzureRmStorageAccountName: 'shashistg'
-#             backendAzureRmContainerName: 'todocaontainer'
-#             backendAzureRmKey: 'dev.terraform.tfstate'
+  - stage: TerraformInitAndApply
+    displayName: 'TerraformInit and Apply'
+    dependsOn: ManualApproval
+    condition: succeeded()
+    jobs:
+      - job: terraformInit
+        displayName: TerraformInit
+        pool: shashipool
+        steps:
+        - task: TerraformTask@5
+          displayName: terraformInit
+          inputs:
+            provider: 'azurerm'
+            command: 'init'
+            workingDirectory: '$(workDir)'
+            backendServiceArm: 'todospn'
+            backendAzureRmStorageAccountName: 'shashistg'
+            backendAzureRmContainerName: 'todocaontainer'
+            backendAzureRmKey: 'dev.terraform.tfstate'
 
 #         - task: TerraformTask@5
 #           displayName: terraformApply
