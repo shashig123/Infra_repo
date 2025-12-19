@@ -1,36 +1,69 @@
-# This is a basic workflow to help you get started with Actions
+name: "shashi GitHub"
 
-name: CI
-
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+  push:
+    branches:
+      - 'feature/**'
+      - 'main'
+      - 'hotfix/**'
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+env:
+  TF_DIR: environment/dev/
+  client-id: ${{ secrets.AZURE_CLIENT_ID }}
+  tenant-id: ${{ secrets.TENANTID }}
+  subscription-id: ${{ secrets.SUBSCRIPTIONID }}
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  terraformInit:
+    name: Terraform Init
     runs-on: shashi
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
+    - name: Checkout repo
+      uses: actions/checkout@v4
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+    - name: Azure Login using OIDC
+      uses: azure/login@v1
+      with:
+        client-id: ${{ env.client-id }}
+        tenant-id: ${{ env.tenant-id }}
+        subscription-id: ${{ env.subscription-id }}
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
-        run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+    - name: Terraform Init
+      id: Init
+      run: terraform init -var "subscription_id=${{ secrets.SUBSCRIPTIONID}}"
+      working-directory: ${{ env.TF_DIR }}  # Set the working directory to the "terraform-config" folder
+    - name: Terraform Fmt
+      id: Fmt
+      run: terraform fmt -check
+      continue-on-error: true
+      working-directory: ${{ env.TF_DIR }}  # Set the working directory to the "terraform-config" folder
+      
+    - name: Terraform Validate
+      id: validate
+      run: terraform validate
+      working-directory: environment/dev/  # Set the working directory to the "terraform-config" folder
+      
+    - name: TFLint
+      id: tflint
+      run: tflint
+      working-directory: ${{ env.TF_DIR }}
+
+    - name: Trivy IaC Scan
+      id: trivy
+      run: trivy config .
+      working-directory: ${{ env.TF_DIR }}
+      
+    - name: Checkov Scan
+      id: checkov
+      run: checkov -d ./${{ env.TF_DIR }} --soft-fail
+      
+    - name: Terraform Plan
+      id: plan
+      continue-on-error: true
+      run: terraform plan -var "subscription_id=${{ secrets.SUBSCRIPTIONID }}"
+      working-directory: ${{ env.TF_DIR }}  # Set the working directory for plan
