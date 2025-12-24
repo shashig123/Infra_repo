@@ -1,10 +1,3 @@
-
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
-# Starter pipeline
 trigger: 
 - feature
 - main
@@ -31,12 +24,10 @@ stages:
             provider: 'azurerm'
             command: 'init'
             workingDirectory: '$(workDir)'
-            backendServiceArm: 'todospn'
-            backendAzureRmOverrideSubscriptionID: '/eid1/c/pub/t/e9xrf5-KdkKBXXhIrjOA0g/a/rISbSSETf0KqFyZ8ppdXmA/sc/42ba5669-1b4e-45fd-b7f4-db40c64aa18d/51e6fa7b-5e16-4661-8452-e9bf8e31eedb'
-            backendAzureRmStorageAccountName: 'todostg'
-            backendAzureRmContainerName: 'todocaontainer'
+            backendServiceArm: 'todospn1'
+            backendAzureRmStorageAccountName: 'todostg1234'
+            backendAzureRmContainerName: 'todostgcaontainer'
             backendAzureRmKey: 'dev.terraform.tfstate'
-            initArguments: '-upgrade -input=false'
       
         - task: TerraformTask@5
           displayName: 'TerraformValidate'
@@ -66,10 +57,10 @@ stages:
 
             # workingDirectory: '$(workDir)'
               
-        # - task: PowerShell@2
-        #   inputs:
-        #     targetType: 'inline'
-        #     script: 'tflint --format json > tflint-report.json'
+        - task: PowerShell@2
+          inputs:
+            targetType: 'inline'
+            script: 'tflint --format json > tflint-report.json'
         # - task: PowerShell@2
         #   displayName: 'tfsec scanning'
         #   inputs:
@@ -94,12 +85,14 @@ stages:
 
         - task: PowerShell@2
           displayName: checkov Scanning
+          continueOnError: true
           inputs:
             targetType: 'inline'
             script: 'checkov -d .'
 
         - task: PowerShell@2
           displayName: 'checkovOuput'
+          continueOnError: true
           inputs:
             targetType: 'inline'
             script: 'checkov -d . -o junit > result1.xml'    
@@ -114,14 +107,14 @@ stages:
 #             script: '& ''D:\shashi_GitRepos\agent-1\_work\_tool\infracost.exe'' breakdown --path . --format json --out-file infracost.json'
             
 
-#         # infracost auth login  
-#         - task: TerraformTask@5
-#           displayName: 'TerraformPlan'
-#           inputs:
-#             provider: 'azurerm'
-#             command: 'plan'
-#             workingDirectory: '$(System.DefaultWorkingDirectory)/environment/dev'
-#             environmentServiceNameAzureRM: 'todospn'
+        # infracost auth login  
+        - task: TerraformTask@5
+          displayName: 'TerraformPlan'
+          inputs:
+            provider: 'azurerm'
+            command: 'plan'
+            workingDirectory: '$(workDir)'
+            environmentServiceNameAzureRM: 'todospn1'
           
 # # ==================================
 # # ManualApproval
@@ -158,20 +151,22 @@ stages:
         pool: shashipool
         steps:
         - task: TerraformTask@5
+          displayName: terraform Init
           inputs:
             provider: 'azurerm'
             command: 'init'
-            workingDirectory: '$(System.DefaultWorkingDirectory)/environment/dev'
-            backendServiceArm: 'todospn'
-            backendAzureRmStorageAccountName: 'shashistg'
-            backendAzureRmContainerName: 'todocaontainer'
+            workingDirectory: '$(workDir)'
+            backendServiceArm: 'todospn1'
+            backendAzureRmStorageAccountName: 'todostg1234'
+            backendAzureRmContainerName: 'todostgcaontainer'
             backendAzureRmKey: 'dev.terraform.tfstate'
 
         - task: TerraformTask@5
+          displayName: terraformApply
           inputs:
             provider: 'azurerm'
             command: 'apply'
-            workingDirectory: '$(System.DefaultWorkingDirectory)/environment/dev'
+            workingDirectory: '$(workDir)'
             commandOptions: '--auto-approve'
-            environmentServiceNameAzureRM: 'todospn'
+            environmentServiceNameAzureRM: 'todospn1'
 

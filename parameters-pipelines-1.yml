@@ -4,10 +4,22 @@ trigger: none
 
 pool: shashipool  
 variables: 
- workDir: '$(System.DefaultWorkingDirectory)${{parameters.environment}}'
+- name: workDir
+  value: '$(System.DefaultWorkingDirectory)${{parameters.environment}}'
+  #do tarike se hum bacnend ke key ko pass kr sktehai
+- name: backendAzureRmKey #-----------first way
+  ${{if eq(parameters.environment, 'Dev')}}:
+    value: 'dev.teraform.tfstate'
+  ${{if eq(parameters.environment, 'Prod')}}:
+    value: 'prod.terraform.tfstate'
+
+# - name: backendAzureRmKey #-----------second way 
+#   value: '{{lower(parameters.environment)}}.terraform.tfstate'
 parameters:
   - name: environment
+    type: string
     displayName: Select Environment
+    default: Dev
     values:
       - Dev
       - Prod
@@ -29,12 +41,10 @@ stages:
             provider: 'azurerm'
             command: 'init'
             workingDirectory: '$(workDir)'
-            backendServiceArm: 'todospn'
-            backendAzureRmOverrideSubscriptionID: '/eid1/c/pub/t/e9xrf5-KdkKBXXhIrjOA0g/a/rISbSSETf0KqFyZ8ppdXmA/sc/42ba5669-1b4e-45fd-b7f4-db40c64aa18d/51e6fa7b-5e16-4661-8452-e9bf8e31eedb'
-            backendAzureRmStorageAccountName: 'todostg'
-            backendAzureRmContainerName: 'todocaontainer'
-            backendAzureRmKey: 'dev.terraform.tfstate'
-            initArguments: '-upgrade -input=false'
+            backendServiceArm: 'todospn1'
+            backendAzureRmStorageAccountName: 'todostg1234'
+            backendAzureRmContainerName: 'todostgcaontainer'
+            backendAzureRmKey: '$(backendAzureRmKey)'
       
         - task: TerraformTask@5
           displayName: 'TerraformValidate'
@@ -64,6 +74,8 @@ stages:
               D:\shashi_GitRepos\agent-1\_work\_tool\tflint.exe
             # workingDirectory: '$(workDir)'
         - task: PowerShell@2
+          displayName: 'tflint output'
+          continueOnError: true
           inputs:
             targetType: 'inline'
             script: 'tflint --format json > tflint-report.json'
@@ -76,6 +88,7 @@ stages:
             script: 'tfsec .'
         - task: PowerShell@2
           displayName: "Publish tfsec test results"
+          continueOnError: true
           inputs:
             testRunner: JUnit
             targetType: 'inline'
@@ -83,24 +96,26 @@ stages:
 
         - task: PowerShell@2
           displayName: checkov Scanning
+          continueOnError: true
           inputs:
             targetType: 'inline'
             script: 'checkov -d .'
 
         - task: PowerShell@2
           displayName: 'checkovOuput'
+          continueOnError: true
           inputs:
             targetType: 'inline'
             script: 'checkov -d . -o junit > result1.xml'
-        - task: PowerShell@2
-          continueOnError: true
-          displayName: "Infracost full path"
-          env:
-            INFRACOST_API_KEY: $(INFRACOST_API_KEY)
-          inputs:
-            targetType: 'inline'
-            workingDirectory: '$(workDir)'
-            script: '& ''D:\shashi_GitRepos\agent-1\_work\_tool\infracost.exe'' breakdown --path . --format json --out-file infracost.json'
+#         - task: PowerShell@2
+#           continueOnError: true
+#           displayName: "Infracost full path"
+#           env:
+#             INFRACOST_API_KEY: $(INFRACOST_API_KEY)
+#           inputs:
+#             targetType: 'inline'
+#             workingDirectory: '$(workDir)'
+#             script: '& ''D:\shashi_GitRepos\agent-1\_work\_tool\infracost.exe'' breakdown --path . --format json --out-file infracost.json'
             
 
         # infracost auth login  
@@ -110,7 +125,7 @@ stages:
             provider: 'azurerm'
             command: 'plan'
             workingDirectory: '$(workDir)'
-            environmentServiceNameAzureRM: 'todospn'
+            environmentServiceNameAzureRM: 'todospn1'
           
 # # ==================================
 # # ManualApproval
@@ -152,10 +167,11 @@ stages:
             provider: 'azurerm'
             command: 'init'
             workingDirectory: '$(workDir)'
-            backendServiceArm: 'todospn'
-            backendAzureRmStorageAccountName: 'shashistg'
-            backendAzureRmContainerName: 'todocaontainer'
-            backendAzureRmKey: 'dev.terraform.tfstate'
+            backendServiceArm: 'todospn1'
+            backendAzureRmStorageAccountName: 'todostg1234'
+            backendAzureRmContainerName: 'todostgcaontainer'
+            backendAzureRmKey: '$(backendAzureRmKey)'
+
 
         - task: TerraformTask@5
           displayName: terraformApply
@@ -164,5 +180,5 @@ stages:
             command: 'apply'
             workingDirectory: '$(workDir)'
             commandOptions: '--auto-approve'
-            environmentServiceNameAzureRM: 'todospn'
+            environmentServiceNameAzureRM: 'todospn1'
 

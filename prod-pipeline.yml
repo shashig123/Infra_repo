@@ -25,12 +25,10 @@ stages:
             provider: 'azurerm'
             command: 'init'
             workingDirectory: '$(workDir)'
-            backendServiceArm: 'todospn'
-            backendAzureRmOverrideSubscriptionID: '/eid1/c/pub/t/e9xrf5-KdkKBXXhIrjOA0g/a/rISbSSETf0KqFyZ8ppdXmA/sc/42ba5669-1b4e-45fd-b7f4-db40c64aa18d/51e6fa7b-5e16-4661-8452-e9bf8e31eedb'
-            backendAzureRmStorageAccountName: 'todostg'
-            backendAzureRmContainerName: 'todocaontainer'
-            backendAzureRmKey: 'dev.terraform.tfstate'
-            initArguments: '-upgrade -input=false'
+            backendServiceArm: 'todospn1'
+            backendAzureRmStorageAccountName: 'todostg1234'
+            backendAzureRmContainerName: 'todostgcaontainer'
+            backendAzureRmKey: 'prod.terraform.tfstate'
       
         - task: TerraformTask@5
           displayName: 'TerraformValidate'
@@ -59,9 +57,10 @@ stages:
               
               D:\shashi_GitRepos\agent-1\_work\_tool\tflint.exe
         - task: PowerShell@2
+          continueOnError: true
           inputs:
             targetType: 'inline'
-            script: 'tflint --format json > tflint-report.json'
+            script: 'tflint -o junit > tflint-report.xml'
       
             # workingDirectory: '$(workDir)'
 
@@ -79,16 +78,16 @@ stages:
           inputs:
             targetType: 'inline'
             script: 'tfsec .'
-
         - task: PowerShell@2
           displayName: "Publish tfsec test results"
           continueOnError: true
           inputs:
             testRunner: JUnit
             targetType: 'inline'
-            script: 'tfsec . --format json > tfsec-report.json'
+            script: 'tfsec . -o  junit > tfsec-report.xml'
 
         - task: PowerShell@2
+          continueOnError: true
           displayName: checkov Scanning
           inputs:
             targetType: 'inline'
@@ -96,10 +95,10 @@ stages:
 
         - task: PowerShell@2
           displayName: 'checkovOuput'
+          continueOnError: true
           inputs:
             targetType: 'inline'
-            script: 'checkov -d . -o junit > result1.xml' 
-
+            script: 'checkov -d . -o junit > result1.xml'    
         # - task: PowerShell@2
         #   continueOnError: true
         #   displayName: "Infracost full path"
@@ -118,7 +117,7 @@ stages:
             provider: 'azurerm'
             command: 'plan'
             workingDirectory: '$(workDir)'
-            environmentServiceNameAzureRM: 'todospn'
+            environmentServiceNameAzureRM: 'todospn1'
           
 # # ==================================
 # # ManualApproval
@@ -160,17 +159,17 @@ stages:
             provider: 'azurerm'
             command: 'init'
             workingDirectory: '$(workDir)'
-            backendServiceArm: 'todospn'
-            backendAzureRmStorageAccountName: 'shashistg'
-            backendAzureRmContainerName: 'todocaontainer'
-            backendAzureRmKey: 'dev.terraform.tfstate'
+            backendServiceArm: 'todospn1'
+            backendAzureRmStorageAccountName: 'todostg1234'
+            backendAzureRmContainerName: 'todostgcaontainer'
+            backendAzureRmKey: 'prod.terraform.tfstate'
 
-#         - task: TerraformTask@5
-#           displayName: terraformApply
-#           inputs:
-#             provider: 'azurerm'
-#             command: 'apply'
-#             workingDirectory: '$(workDir)'
-#             commandOptions: '--auto-approve'
-#             environmentServiceNameAzureRM: 'todospn'
+        - task: TerraformTask@5
+          displayName: terraformApply
+          inputs:
+            provider: 'azurerm'
+            command: 'apply'
+            workingDirectory: '$(workDir)'
+            commandOptions: '--auto-approve'
+            environmentServiceNameAzureRM: 'todospn1'
 

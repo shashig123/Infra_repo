@@ -7,8 +7,8 @@ terraform {
   }
   # backend "azurerm" {
   #   resource_group_name = "todorg"
-  #   storage_account_name = "todostg"
-  #   container_name = "todocontainer"
+  #   storage_account_name = "todostg1234"
+  #   container_name = "todostgcontainer"
   #   key = "dev.terraform.tfstate"
     
   # }
@@ -16,5 +16,5 @@ terraform {
 
 provider "azurerm" {
   features {}
-  subscription_id = "73db7a9a-aef7-41fe-8a49-10610ce568af"
+  subscription_id = "ff4b8dcc-265a-4fdf-9501-146b37e6ac66"
 }
