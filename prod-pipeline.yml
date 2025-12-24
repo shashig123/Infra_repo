@@ -25,10 +25,19 @@ stages:
             provider: 'azurerm'
             command: 'init'
             workingDirectory: '$(workDir)'
+<<<<<<< HEAD
             backendServiceArm: 'todospn1'
             backendAzureRmStorageAccountName: 'todostg1234'
             backendAzureRmContainerName: 'todostgcaontainer'
             backendAzureRmKey: 'prod.terraform.tfstate'
+=======
+            backendServiceArm: 'todospn'
+            backendAzureRmOverrideSubscriptionID: '/eid1/c/pub/t/e9xrf5-KdkKBXXhIrjOA0g/a/rISbSSETf0KqFyZ8ppdXmA/sc/42ba5669-1b4e-45fd-b7f4-db40c64aa18d/51e6fa7b-5e16-4661-8452-e9bf8e31eedb'
+            backendAzureRmStorageAccountName: 'todostg'
+            backendAzureRmContainerName: 'todocaontainer'
+            backendAzureRmKey: 'dev.terraform.tfstate'
+            initArguments: '-upgrade -input=false'
+>>>>>>> 00b4c14d0c4e1592b8b2282fcbb053b6156c10a7
       
         - task: TerraformTask@5
           displayName: 'TerraformValidate'
@@ -117,7 +126,11 @@ stages:
             provider: 'azurerm'
             command: 'plan'
             workingDirectory: '$(workDir)'
+<<<<<<< HEAD
             environmentServiceNameAzureRM: 'todospn1'
+=======
+            environmentServiceNameAzureRM: 'todospn'
+>>>>>>> 00b4c14d0c4e1592b8b2282fcbb053b6156c10a7
           
 # # ==================================
 # # ManualApproval
@@ -159,10 +172,17 @@ stages:
             provider: 'azurerm'
             command: 'init'
             workingDirectory: '$(workDir)'
+<<<<<<< HEAD
             backendServiceArm: 'todospn1'
             backendAzureRmStorageAccountName: 'todostg1234'
             backendAzureRmContainerName: 'todostgcaontainer'
             backendAzureRmKey: 'prod.terraform.tfstate'
+=======
+            backendServiceArm: 'todospn'
+            backendAzureRmStorageAccountName: 'shashistg'
+            backendAzureRmContainerName: 'todocaontainer'
+            backendAzureRmKey: 'dev.terraform.tfstate'
+>>>>>>> 00b4c14d0c4e1592b8b2282fcbb053b6156c10a7
 
         - task: TerraformTask@5
           displayName: terraformApply
@@ -171,5 +191,9 @@ stages:
             command: 'apply'
             workingDirectory: '$(workDir)'
             commandOptions: '--auto-approve'
+<<<<<<< HEAD
             environmentServiceNameAzureRM: 'todospn1'
+=======
+            environmentServiceNameAzureRM: 'todospn'
+>>>>>>> 00b4c14d0c4e1592b8b2282fcbb053b6156c10a7
 

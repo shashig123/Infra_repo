@@ -1,0 +1,69 @@
+name: "shashi GitHub"
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'feature/**'
+      - 'main'
+      - 'hotfix/**'
+
+env:
+  TF_DIR: environment/dev/
+  client-id: ${{ secrets.AZURE_CLIENT_ID }}
+  tenant-id: ${{ secrets.TENANTID }}
+  subscription-id: ${{ secrets.SUBSCRIPTIONID }}
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  terraformInit:
+    name: Terraform Init
+    runs-on: shashi
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Azure Login using OIDC
+      uses: azure/login@v1
+      with:
+        client-id: ${{ env.client-id }}
+        tenant-id: ${{ env.tenant-id }}
+        subscription-id: ${{ env.subscription-id }}
+
+    - name: Terraform Init
+      id: Init
+      run: terraform init -var "subscription_id=${{ secrets.SUBSCRIPTIONID}}"
+      working-directory: ${{ env.TF_DIR }}  # Set the working directory to the "terraform-config" folder
+    - name: Terraform Fmt
+      id: Fmt
+      run: terraform fmt -check
+      continue-on-error: true
+      working-directory: ${{ env.TF_DIR }}  # Set the working directory to the "terraform-config" folder
+      
+    - name: Terraform Validate
+      id: validate
+      run: terraform validate
+      working-directory: environment/dev/  # Set the working directory to the "terraform-config" folder
+      
+    - name: TFLint
+      id: tflint
+      run: tflint
+      working-directory: ${{ env.TF_DIR }}
+
+    - name: Trivy IaC Scan
+      id: trivy
+      run: trivy config .
+      working-directory: ${{ env.TF_DIR }}
+      
+    - name: Checkov Scan
+      id: checkov
+      run: checkov -d ./${{ env.TF_DIR }} --soft-fail
+      
+    - name: Terraform Plan
+      id: plan
+      continue-on-error: true
+      run: terraform plan -var "subscription_id=${{ secrets.SUBSCRIPTIONID }}"
+      working-directory: ${{ env.TF_DIR }}  # Set the working directory for plan
